@@ -1,0 +1,151 @@
+.react-datepicker__triangle {
+    border-top-color: #ff385c; /* Custom triangle color */
+  }
+  
+  .react-datepicker__header {
+    background-color: #ff385c; /* Header color */
+    border: none;
+  }
+  
+  .react-datepicker__day--selected {
+    background-color: #ff385c !important; /* Selected date background */
+    color: #fff !important;
+  }
+  
+  .react-datepicker__day:hover {
+    background-color: #ff385c;
+    color: #fff;
+  }
+  
+  .react-datepicker__month {
+    padding: 10px;
+  }
+  
+
+  /* hotel detail view*/
+  .image-gallery img {
+    transition: transform 0.2s ease-in-out;
+  }
+  
+  .image-gallery img:hover {
+    transform: scale(1.05);
+  }
+  
+  .details {
+    font-family: 'Arial, sans-serif';
+    line-height: 1.6;
+  }
+  
+
+  .review-box {
+    flex: 1 1 calc(50% - 20px);
+    background-color: #ffffff;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+  }
+  
+  .review-box:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  }
+  
+  .footer {
+    background-color: #f7f7f7;
+    padding: 40px 0;
+    font-family: Arial, sans-serif;
+  }
+  
+  .footer-content {
+    display: flex;
+    justify-content: space-between;
+    max-width: 1200px;
+    margin: 0 auto;
+    flex-wrap: wrap;
+  }
+  
+  .footer-links,
+  .footer-social,
+  .footer-settings,
+  .footer-newsletter {
+    flex: 1 1 200px;
+    margin-right: 20px;
+  }
+  
+  .footer-links h3,
+  .footer-social h3,
+  .footer-settings h3,
+  .footer-newsletter h3 {
+    font-size: 16px;
+    margin-bottom: 10px;
+    font-weight: bold;
+  }
+  
+  .footer-links ul,
+  .footer-settings ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .footer-links li,
+  .footer-settings li {
+    margin-bottom: 8px;
+  }
+  
+  .footer-links a,
+  .footer-settings a {
+    text-decoration: none;
+    color: #333;
+    font-size: 14px;
+    transition: color 0.3s;
+  }
+  
+  .footer-links a:hover,
+  .footer-settings a:hover {
+    color: #ff5a5f; /* Airbnb red */
+  }
+  
+  .footer-social .social-icons a {
+    margin-right: 15px;
+  }
+  
+  .footer-social .social-icons img {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .footer-newsletter form {
+    display: flex;
+  }
+  
+  .footer-newsletter input {
+    padding: 10px;
+    margin-right: 10px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    width: 70%;
+  }
+  
+  .footer-newsletter button {
+    padding: 10px 15px;
+    border-radius: 4px;
+    background-color: #ff5a5f;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .footer-newsletter button:hover {
+    background-color: #e03e43;
+  }
+  
+  .footer-bottom {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 14px;
+    color: #777;
+  }
+  
