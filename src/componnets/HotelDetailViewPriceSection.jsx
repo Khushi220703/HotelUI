@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
-const PriceSection = ({ pricePerNight }) => {
+const PriceSection = ({ pricePerNight, hotel }) => {
     const [rooms, setRooms] = useState(1);
     const [guests, setGuests] = useState(1);
     const [checkIn, setCheckIn] = useState(null);
@@ -13,7 +14,7 @@ const PriceSection = ({ pricePerNight }) => {
     const calculateTotalPrice = () => {
         if (checkIn && checkOut) {
             const days =
-                (new Date(checkOut).getTime() - new Date(checkIn).getTime()) /
+                (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 
                 (1000 * 3600 * 24);
             return days > 0 ? rooms * pricePerNight * days : 0;
         }
@@ -33,6 +34,85 @@ const PriceSection = ({ pricePerNight }) => {
     };
 
     const totalPrice = calculateTotalPrice();
+
+    useEffect(() => {
+        const scriptId = 'payu-checkout-script';
+        if (!document.getElementById(scriptId)) {
+            const script = document.createElement('script');
+            script.src = 'https://test.payu.in/_payment';
+            script.id = scriptId;
+            script.async = true;
+            document.body.appendChild(script);
+
+            return () => {
+                document.body.removeChild(script);
+            };
+        }
+    }, []);
+
+    const handlePayment = async () => {
+        
+        try {
+            const response = await axios.post(
+                `${process.env.REACT_APP_URL}payment/make-payment`,
+                {
+                amount: totalPrice * 100, // PayU expects amount in paise
+                currency: 'INR',
+                order_id: `ORDER_${Date.now()}`, // Generate a unique order ID
+                order_note: `Booking for Seaside Resort`,
+                firstname: 'User Name', // Add firstname
+                email: 'user@example.com', // Add email
+                phone: '9999999999', // Add phone
+                productinfo: `Booking for Seaside Resort`, // Add productinfo
+                }
+            );
+          
+           
+            
+            const { txnid, payment_link, status } = response.data.paymentData;
+
+            if (response.status === 200) {
+                const options = {
+                    key: 'Sy5lhf', 
+                    txnid: txnid,
+                    amount: totalPrice, 
+                    productinfo: `Booking for seaside hotel`,
+                    firstname: 'User Name',
+                    email: 'user@example.com',
+                    phone: '9999999999',
+                    surl: `${process.env.REACT_APP_URL}payment/verify-payment`,
+                    furl: `${process.env.REACT_APP_URL}payment/verify-payment`,
+                };
+                
+                 
+             
+                if (window.PayUCheckout) {
+                    
+                    const payu = new window.PayUCheckout(options);
+                    payu.setMerchantKey(options.key);
+                    payu.setTransactionId(options.txnid);
+                    payu.setAmount(options.amount);
+                    payu.setProductInfo(options.productinfo);
+                    payu.setFirstName(options.firstname);
+                    payu.setEmail(options.email);
+                    payu.setPhone(options.phone);
+                    payu.setSuccessUrl(options.surl);
+                    payu.setFailureUrl(options.furl);
+                    payu.makePayment();
+                } else {
+                   
+                    console.error('PayUCheckout is not available.');
+                }
+              
+            } else {
+                console.error('Failed to create order:', response);
+                alert('Failed to create payment order. Please try again.');
+            }
+        } catch (error) {
+            console.error('Payment Initialization Failed:', error);
+            alert('Failed to initialize payment. Please try again.');
+        }
+    };
 
     return (
         <div style={styles.priceSection}>
@@ -105,6 +185,7 @@ const PriceSection = ({ pricePerNight }) => {
                 <button
                     style={styles.reserveButton}
                     disabled={!checkIn || !checkOut || totalPrice === 0}
+                    onClick={handlePayment}
                 >
                     Reserve Now
                 </button>
@@ -116,6 +197,7 @@ const PriceSection = ({ pricePerNight }) => {
     );
 };
 
+// Styles
 const styles = {
     priceSection: {
         backgroundColor: '#fff',

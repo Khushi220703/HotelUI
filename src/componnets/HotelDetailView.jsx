@@ -7,6 +7,10 @@ import { Modal, Button } from '@mui/material'; // Modal and Button from MUI
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
+import {decodeToken} from '../assets/TokenDecode';
+
+
+
 const HotelDetailView = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -15,7 +19,8 @@ const HotelDetailView = () => {
   const locations = [
     { lat: 40.730610, lng: -73.935242 }, // New York
   ];
-
+ console.log(location.state);
+ 
   const [isHovered, setHovered] = React.useState(null);
   const [newReview, setNewReview] = useState({
     reviewer: '',
@@ -25,10 +30,29 @@ const HotelDetailView = () => {
 
   const [openModal, setOpenModal] = useState(false); // State for opening modal
 
-  const handleReviewSubmit = () => {
+  
+  const handleReviewSubmit = async () => {
     if (newReview.reviewer && newReview.comment && newReview.rating) {
       hotel.reviews.push(newReview);
-      setNewReview({ reviewer: '', comment: '', rating: 0 });
+      const token =  decodeToken(localStorage.getItem("token"));
+      console.log(token);
+      const reviews = {
+        _id:hotel._id,
+        email:token.email,
+        username:newReview.reviewer,
+        comment:newReview.comment,
+        rating:newReview.rating
+      };
+
+      try {
+        const response = await  axios.patch(`${process.env.REACT_APP_URL}hotel/add-review`, reviews);
+        setNewReview({ reviewer: '', comment: '', rating: 0 });
+        console.log(response);
+        
+      } catch (error) {
+        console.log("There is an error from server side", error);
+        
+      }     
     } else {
       alert('Please fill in all fields!');
     }
@@ -70,16 +94,11 @@ const HotelDetailView = () => {
     setOpenModal(false);
   };
 
-  // Amenities list for the hotel
-  const amenities = [
-    'Free Wi-Fi',
-    'Swimming Pool',
-    'Gym',
-    'Restaurant',
-    'Free Parking',
-    'Room Service',
-  ];
 
+  
+  
+  
+  
   return (
     <div style={styles.container}>
       <div style={styles.deleteButtonContainer}>
@@ -138,7 +157,7 @@ const HotelDetailView = () => {
         <div style={styles.amenitiesSection}>
           <h3>Amenities:</h3>
           <ul style={styles.amenitiesList}>
-            {amenities.map((amenity, index) => (
+            {hotel.amenities[0].split(',').map((amenity, index) => (
               <li key={index} style={styles.amenityItem}>
                 &#9733; {amenity}
               </li>
@@ -160,7 +179,7 @@ const HotelDetailView = () => {
                 onMouseEnter={() => setHovered(index)}
                 onMouseLeave={() => setHovered(null)}
               >
-                <p style={styles.reviewerName}>{review.reviewer}</p>
+                <p style={styles.reviewerName}>{review.username}</p>
                 <p style={styles.reviewComment}>{review.comment}</p>
 
                 {/* Star Rating for Review */}
@@ -404,15 +423,15 @@ const styles = {
   cancelButton: {
     border: '1px solid #ddd',
   },
-  deleteButton: {
-    backgroundColor: '#FF5A5F',
-    color: '#fff',
-    border:"none",
-    borderRadius:"5px",
-    height:"40px",
-    width:"110px"
+  // deleteButton: {
+  //   backgroundColor: '#FF5A5F',
+  //   color: '#fff',
+  //   border:"none",
+  //   borderRadius:"5px",
+  //   height:"40px",
+  //   width:"110px"
     
-  },
+  // },
 };
 
 export default HotelDetailView;

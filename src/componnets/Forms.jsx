@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
-
-export const LoginForm = ({setloggedIn}) => {
+import { useNavigate } from 'react-router-dom';
+import {  toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+export const LoginForm = ({ setloggedIn, closeModal }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
+   
     e.preventDefault();
 
     const loginData = { email, password };
@@ -17,13 +21,14 @@ export const LoginForm = ({setloggedIn}) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(loginData),
       });
-
+      console.log(response);
+      
       const data = await response.json();
       if (response.ok) {
         setSuccess('Login successful');
         setloggedIn(true);
         setError('');
-        console.log(data.token);
+        closeModal();
         
         localStorage.setItem('token', data.token)
       } else {
@@ -52,6 +57,7 @@ export const LoginForm = ({setloggedIn}) => {
         value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
+     
       <button onClick={handleLogin} style={modalStyles.submitButton}>
         Login
       </button>
@@ -61,7 +67,7 @@ export const LoginForm = ({setloggedIn}) => {
   );
 };
 
-export const SignupForm = ({setloggedIn}) => {
+export const SignupForm = ({setloggedIn, closeModal}) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -82,20 +88,20 @@ export const SignupForm = ({setloggedIn}) => {
     e.preventDefault();
 
     const userData = { name, email, password, phone, role: isAdmin ? 'admin' : 'customer', address };
-
-    console.log(userData);
-    
+ 
     try {
       const response = await fetch(`${process.env.REACT_APP_URL}user/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData),
       });
-      console.log(response);
+      console.log(response.status);
       
       const data = await response.json();
-      if (response.ok) {
+      if (response.status === 201) {
         setSuccess('User registered successfully');
+        toast.success("Please check your mail!");
+        closeModal();
         setloggedIn(true);
         setError('');
       } else {

@@ -31,6 +31,7 @@ const HotelCard = ({ hotel }) => {
   };
 
   const handleCardClick = () => {
+   
     navigate(`/hotel/${hotel._id}`, { state: { hotel } });
   };
 

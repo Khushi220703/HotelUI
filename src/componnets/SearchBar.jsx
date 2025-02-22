@@ -1,26 +1,13 @@
 import React, { useState } from "react";
 import { FaSearch } from "react-icons/fa";
 import axios from "axios";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 
 const SearchBar = () => {
   const [location, setLocation] = useState("");
-  const [rooms, setRooms] = useState(1);
+  const [price, setPrice] = useState("");
+  const [name, setName] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  
-  // State for person counts
-  const [adults, setAdults] = useState(1);
-  const [children, setChildren] = useState(0);
-  const [infants, setInfants] = useState(0);
-  const [pets, setPets] = useState(0);
-
-  // State for tracking the focused input
-  const [focusedInput, setFocusedInput] = useState("");
 
   const fetchLocationSuggestions = async (query) => {
     if (query.length > 0) {
@@ -56,13 +43,8 @@ const SearchBar = () => {
   const handleSearch = async () => {
     const query = {
       location,
-      rooms,
-      startDate,
-      endDate,
-      adults,
-      children,
-      infants,
-      pets,
+      price,
+      name,
     };
     console.log("Search Query: ", query);
     try {
@@ -79,29 +61,16 @@ const SearchBar = () => {
     setShowSuggestions(false);
   };
 
-  const handleDatePickerClick = () => {
-    setShowDatePicker(!showDatePicker);
-  };
-
-  // Function to handle input focus
-  const handleFocus = (inputName) => {
-    setFocusedInput(inputName);
-  };
-
   return (
     <div style={styles.container}>
       {/* Location Input */}
       <div style={styles.inputContainer}>
         <input
           type="text"
-          placeholder="Where are you going?"
+          placeholder="Search by location"
           value={location}
           onChange={handleLocationChange}
-          onFocus={() => handleFocus("location")}
-          style={{
-            ...styles.input,
-            ...(focusedInput === "location" ? styles.focusedInput : styles.defaultInput),
-          }}
+          style={styles.input}
         />
         {showSuggestions && suggestions.length > 0 && (
           <ul style={styles.suggestionsList}>
@@ -118,55 +87,25 @@ const SearchBar = () => {
         )}
       </div>
 
-      {/* Check-In/Check-Out */}
-      <div style={styles.dateContainer}>
-        <div
-          style={styles.dateInputContainer}
-          onClick={handleDatePickerClick}
-        >
-          <input
-            type="text"
-            placeholder="Check-In"
-            value={startDate ? startDate.toLocaleDateString() : ""}
-            readOnly
-            onFocus={() => handleFocus("startDate")}
-            style={{
-              ...styles.input,
-              ...(focusedInput === "startDate" ? styles.focusedInput : styles.defaultInput),
-            }}
-          />
-        </div>
-        <div
-          style={styles.dateInputContainer}
-          onClick={handleDatePickerClick}
-        >
-          <input
-            type="text"
-            placeholder="Check-Out"
-            value={endDate ? endDate.toLocaleDateString() : ""}
-            readOnly
-            onFocus={() => handleFocus("endDate")}
-            style={{
-              ...styles.input,
-              ...(focusedInput === "endDate" ? styles.focusedInput : styles.defaultInput),
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Rooms Input */}
+      {/* Price Input */}
       <div style={styles.inputContainer}>
         <input
           type="number"
-          min={1}
-          placeholder="Rooms"
-          value={rooms}
-          onChange={(e) => setRooms(Number(e.target.value))}
-          onFocus={() => handleFocus("rooms")}
-          style={{
-            ...styles.input,
-            ...(focusedInput === "rooms" ? styles.focusedInput : styles.defaultInput),
-          }}
+          placeholder="Search by price"
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+          style={styles.input}
+        />
+      </div>
+
+      {/* Name Input */}
+      <div style={styles.inputContainer}>
+        <input
+          type="text"
+          placeholder="Search by name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          style={styles.input}
         />
       </div>
 
@@ -174,26 +113,6 @@ const SearchBar = () => {
       <button onClick={handleSearch} style={styles.searchButton}>
         <FaSearch />
       </button>
-
-      {/* Date Picker Popup */}
-      {showDatePicker && (
-        <div style={styles.datePickerPopup}>
-          <DatePicker
-            selected={startDate}
-            onChange={(dates) => {
-              const [start, end] = dates;
-              setStartDate(start);
-              setEndDate(end);
-            }}
-            startDate={startDate}
-            endDate={endDate}
-            selectsRange
-            inline
-            dateFormat="MM/dd/yyyy"
-            calendarClassName="custom-calendar"
-          />
-        </div>
-      )}
     </div>
   );
 };
@@ -219,34 +138,14 @@ const styles = {
     margin: "5px",
   },
   input: {
-   
     outline: "none",
     padding: "10px",
     width: "200px",
     boxSizing: "border-box",
-    border:"none",
-    height:"40px",
-    borderRadius:"5px"
-  },
-  focusedInput: {
-   
-    backgroundColor: "white",
-    borderRadius: "10px",
-    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
-
-  },
-  defaultInput: {
-    borderColor: "#ccc",
-  },
-  dateContainer: {
-    display: "flex",
-    gap: "10px",
-    position: "relative",
-  },
-  dateInputContainer: {
-    display: "flex",
-    flexDirection: "column",
-    cursor: "pointer",
+    border: "none",
+    height: "40px",
+    borderRadius: "5px",
+    backgroundColor: "#f9f9f9",
   },
   searchButton: {
     backgroundColor: "#ff385c",
@@ -260,8 +159,8 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     marginLeft: "10px",
-    width:"12%",
-    height:"50px"
+    width: "12%",
+    height: "50px",
   },
   suggestionsList: {
     position: "absolute",
@@ -278,14 +177,6 @@ const styles = {
     padding: "10px",
     cursor: "pointer",
   },
-  datePickerPopup: {
-    position: "absolute",
-    top: "55px",
-    zIndex: 100,
-    left: "15%",
-  },
 };
-
-
 
 export default SearchBar;

@@ -7,9 +7,9 @@ const LoginPage = ({ isLogin, closeModal, handleModalSwitch,  setloggedIn }) => 
       <div style={modalStyles.modal}>
         <h2>{isLogin ? 'Login' : 'Sign Up'}</h2>
         {isLogin ? (
-          <LoginForm   setloggedIn={setloggedIn}/>
+          <LoginForm   setloggedIn={setloggedIn} closeModal = {closeModal}/>
         ) : (
-          <SignupForm setloggedIn={setloggedIn}/>
+          <SignupForm setloggedIn={setloggedIn} closeModal = {closeModal}/>
         )}
         <button onClick={handleModalSwitch} style={modalStyles.switchButton}>
           {isLogin ? 'Don\'t have an account? Sign Up' : 'Already have an account? Login'}

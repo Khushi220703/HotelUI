@@ -9,15 +9,21 @@ import Footer from "./componnets/Footer";
 import LoginPage from "./componnets/Login";
 import { useState } from "react";
 import ProtectedRoute from "./componnets/ProtectedRoute";
+import { ToastContainer} from 'react-toastify';
+
+
 function App() {
 
   const [loggedIn, setloggedIn] = useState(localStorage.getItem("token") || false);
   return (
     <Router>
+     <ToastContainer />
       <Header loggedIn={loggedIn} setloggedIn={setloggedIn}/>
       <Routes>
+     
         {/* Home Route - Displays the list of hotels */}
         <Route path="/login" element={<LoginPage setloggedIn={setloggedIn}/>}/>
+       
         <Route path="/" element={<Hotel loggedIn={loggedIn}/>} />
         {/* Hotel Detail View Route */}
         <Route path="/hotel/:id" element={<ProtectedRoute element={<HotelDetailView />} loggedIn={loggedIn} />} />
