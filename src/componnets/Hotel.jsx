@@ -3,6 +3,17 @@ import HotelCard from "./HotelCard";
 import { decodeToken } from "../assets/TokenDecode";
 import { useSearchParams } from "react-router-dom";
 import axios from "axios";
+import { FaHotel, FaMapMarkerAlt, FaCity, FaGlobe, FaDollarSign, FaImages } from "react-icons/fa";
+import {
+  Stepper,
+  Step,
+  StepLabel,
+  Button,
+  TextField,
+  Chip,
+  InputAdornment,
+} from "@mui/material";
+import { motion } from "framer-motion";
 
 const HotelList = () => {
   const [hotels, setHotel] = useState([]);
@@ -19,34 +30,37 @@ const HotelList = () => {
     },
     description: "",
     amenities: [],
-    images: [], 
+    images: [],
     rating: 0,
     pricePerNight: 0,
   });
-
+  const [activeStep, setActiveStep] = useState(0);
   const [searchParams] = useSearchParams();
   const tokens = searchParams.get("token");
-
+  const steps = ["Hotel Details", "Hotel Location", "Price", "Amenities & Images"];
   useEffect(() => {
     if (tokens) {
       verifyToken(tokens);
     }
   }, [tokens]);
-  
+
   const verifyToken = async (token) => {
-  console.log(token);
-  
+    console.log(token);
+
     try {
       const response = await axios.post(`${process.env.REACT_APP_URL}user/verify`, { token });
       console.log("Token Verified:", response);
     } catch (error) {
       console.log(error);
-      
+
       console.error("Token Verification Failed:", error.response?.data || error.message);
     }
   };
 
- 
+  const imageCount = newHotel.images.length;
+  const imageSize = Math.max(80, 150 - imageCount * 10); // Shrink size
+  const inputWidth = imageSize + 20; // Slightly wider than image
+
   const [currentPage, setCurrentPage] = useState(1); // Track the current page of the form
   const [totalPages, setTotalPages] = useState(4); // Total number of form pages
 
@@ -88,15 +102,15 @@ const HotelList = () => {
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     const validImages = files.filter((file) => file.type.startsWith("image/"));
-  
+
     const imageObjects = validImages.map((file) => ({ file, description: "" }));
-  
+
     setNewHotel((prev) => ({
       ...prev,
       images: [...prev.images, ...imageObjects],
     }));
   };
-  
+
   const handleImageDescriptionChange = (e, index) => {
     const { value } = e.target;
     setNewHotel((prev) => {
@@ -105,7 +119,7 @@ const HotelList = () => {
       return { ...prev, images: updatedImages };
     });
   };
-  
+
 
   const handleImageRemove = (index) => {
     setNewHotel((prev) => {
@@ -114,7 +128,7 @@ const HotelList = () => {
       return { ...prev, images: updatedImages };
     });
   };
-  
+
   useEffect(() => {
     if (localStorage.getItem("token")) {
       setToken(decodeToken(localStorage.getItem("token")));
@@ -129,44 +143,44 @@ const HotelList = () => {
       return;
     }
 
-    
+
     try {
       let formData = new FormData();
 
-    // Append basic fields
-    formData.append("name", newHotel.name);
-    formData.append("description", newHotel.description);
-    formData.append("rating", newHotel.rating);
-    formData.append("pricePerNight", newHotel.pricePerNight);
+      // Append basic fields
+      formData.append("name", newHotel.name);
+      formData.append("description", newHotel.description);
+      formData.append("rating", newHotel.rating);
+      formData.append("pricePerNight", newHotel.pricePerNight);
 
-    // Append location fields explicitly
-    for (const [key, value] of Object.entries(newHotel.location)) {
-      formData.append(`location[${key}]`, value);
-    }
-    
-    
-    // Append amenities as a JSON string
-    formData.append("amenities", newHotel.amenities);
+      // Append location fields explicitly
+      for (const [key, value] of Object.entries(newHotel.location)) {
+        formData.append(`location[${key}]`, value);
+      }
 
-    // Append images one by one
-    newHotel.images.forEach((image, index) => {
-      formData.append("images", image.file); 
-      formData.append(`imageDescriptions`, image.description);
-    });
-    console.log(newHotel);
-    
-    console.log("FormData before submission:");
-    for (const [key, value] of formData.entries()) {
-      console.log(key, value);
-    }
 
-      
+      // Append amenities as a JSON string
+      formData.append("amenities", newHotel.amenities);
+
+      // Append images one by one
+      newHotel.images.forEach((image, index) => {
+        formData.append("images", image.file);
+        formData.append(`imageDescriptions`, image.description);
+      });
+      console.log(newHotel);
+
+      console.log("FormData before submission:");
+      for (const [key, value] of formData.entries()) {
+        console.log(key, value);
+      }
+
+
       const response = await fetch(`${process.env.REACT_APP_URL}hotel/add-hotel`, {
         method: "POST",
         body: formData,
       });
       console.log(response);
-      
+
       if (response.ok) {
         alert("Hotel added successfully");
         fetchHotel(); // Reload the hotels list
@@ -175,7 +189,7 @@ const HotelList = () => {
         alert("Error adding hotel");
       }
     } catch (error) {
-      
+
       console.log("Error while adding hotel.", error);
     }
   };
@@ -183,12 +197,14 @@ const HotelList = () => {
   const handleNextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
+      setActiveStep((prev) => prev + 1)
     }
   };
 
   const handlePreviousPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
+      setActiveStep((prev) => prev - 1)
     }
   };
 
@@ -197,6 +213,7 @@ const HotelList = () => {
       case 1:
         return (
           <>
+
             <input
               type="text"
               name="name"
@@ -269,6 +286,21 @@ const HotelList = () => {
               style={styles.textarea}
             />
             <input
+              type="number"
+              name="pricePerNight"
+              placeholder="Price Per Night"
+              value={newHotel.pricePerNight}
+              onChange={handleFormChange}
+              required
+              style={styles.input}
+            />
+          </>
+        );
+      case 4:
+        return (
+          <>
+
+            <input
               type="text"
               name="amenities"
               placeholder="Amenities (comma-separated)"
@@ -276,59 +308,57 @@ const HotelList = () => {
               onChange={handleAmenityChange}
               style={styles.input}
             />
+           <div style={styles.imageContainer}>
+      {/* Custom Upload Button */}
+      <label htmlFor="upload-image" style={styles.uploadButton}>
+        Upload Images
+      </label>
+      <input
+        id="upload-image"
+        type="file"
+        onChange={handleImageChange}
+        accept="image/*"
+        multiple
+        style={{ display: "none" }}
+      />
+
+      {/* Image Previews */}
+      <div style={styles.imagePreviewContainer}>
+        {newHotel.images.map((image, index) => (
+          <div key={index} style={styles.imagePreviewWithDescription}>
+            <div style={{ ...styles.imagePreview, width: imageSize, height: imageSize }}>
+              <img
+                src={URL.createObjectURL(image.file)}
+                alt={`preview-${index}`}
+                style={{ ...styles.previewImage, width: imageSize, height: imageSize }}
+              />
+              <button
+                type="button"
+                onClick={() => handleImageRemove(index)}
+                style={styles.removeButton}
+              >
+                ✖
+              </button>
+            </div>
+            <input
+              type="text"
+              placeholder="Image Description"
+              value={image.description || ""}
+              onChange={(e) => handleImageDescriptionChange(e, index)}
+              style={{
+                ...styles.imageInput,
+                width: inputWidth,
+                fontSize: Math.max(12, 16 - imageCount * 1), // Reduce font size
+              }}
+              
+            />
+          </div>
+        ))}
+      </div>
+    </div>
           </>
         );
-        case 4:
-          return (
-            <>
-              <input
-                type="number"
-                name="pricePerNight"
-                placeholder="Price Per Night"
-                value={newHotel.pricePerNight}
-                onChange={handleFormChange}
-                required
-                style={styles.input}
-              />
-              <input
-                type="file"
-                onChange={handleImageChange}
-                accept="image/*"
-                multiple
-                style={styles.input}
-              />
-              <div style={styles.imagePreviewContainer}>
-                {newHotel.images.map((image, index) => (
-                  <div key={index} style={styles.imagePreviewWithDescription}>
-                    <div style={styles.imagePreview}>
-                      <img
-                        src={URL.createObjectURL(image.file)}
-                        alt={`preview-${index}`}
-                        style={styles.previewImage}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleImageRemove(index)}
-                        style={styles.removeButton}
-                      >
-                        X
-                      </button>
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="Image Description"
-                      value={image.description || ""}
-                      onChange={(e) =>
-                        handleImageDescriptionChange(e, index)
-                      }
-                      style={styles.input}
-                    />
-                  </div>
-                ))}
-              </div>
-            </>
-          );
-        
+
       default:
         return null;
     }
@@ -337,7 +367,7 @@ const HotelList = () => {
   return (
     <div style={styles.container}>
       {token.isAdmin === "admin" ? (
-        <button style={styles.authButton} onClick={() => setIsFormOpen(true)}>
+        <button style={styles.authButton} onClick={() => setIsFormOpen(true)} >
           Add Hotel
         </button>
       ) : (
@@ -352,9 +382,36 @@ const HotelList = () => {
 
       {/* Modal for the Hotel Form */}
       {isFormOpen && (
-        <div style={styles.modal}>
+        <motion.div style={styles.modal} initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}>
           <div style={styles.modalContent}>
-            <h2 style={styles.modalTitle}>Add Hotel</h2>
+            <h2 style={styles.modalTitle} >Add Hotel</h2>
+
+            <Stepper
+              activeStep={activeStep}
+              alternativeLabel
+              sx={{
+                "& .MuiStepIcon-root": { color: "#B0B0B0 !important" },
+                "& .MuiStepIcon-root.Mui-active, & .MuiStepIcon-root.Mui-completed": {
+                  color: "#FF5A5F !important",
+                },
+                "& .MuiStepLabel-label": { color: "#B0B0B0 !important" },
+                "& .MuiStepLabel-label.Mui-active, & .MuiStepLabel-label.Mui-completed": {
+                  color: "#FF5A5F !important",
+                },
+              }}
+            >
+              {steps.map((label, index) => (
+                <Step key={index}>
+                  <StepLabel>{label}</StepLabel>
+                </Step>
+              ))}
+            </Stepper>
+
+
+
+
             <button style={styles.closeButton} onClick={() => setIsFormOpen(false)}>
               X
             </button>
@@ -374,14 +431,14 @@ const HotelList = () => {
               </div>
             </form>
           </div>
-        </div>
+        </motion.div>
       )}
     </div>
   );
 };
 
 const styles = {
-  authButton:{
+  authButton: {
     alignSelf: "flex-end", // To position the button on the right side
     padding: "12px 20px",
     backgroundColor: "#FF5A5F",
@@ -410,7 +467,7 @@ const styles = {
     fontSize: "16px",
     border: "1px solid #ddd",
     borderRadius: "5px",
-    width: "300px",
+    width: "90%",
     marginBottom: "10px",
   },
   textarea: {
@@ -443,6 +500,7 @@ const styles = {
   modalTitle: {
     textAlign: "center",
     marginBottom: "20px",
+    color: "#FF5A5F",
   },
   closeButton: {
     position: "absolute",
@@ -460,7 +518,7 @@ const styles = {
     justifyContent: "space-between",
   },
   navigationButton: {
-    backgroundColor: "#4CAF50",
+    backgroundColor: "#FF5A5F",
     color: "#fff",
     padding: "10px 20px",
     border: "none",
@@ -479,12 +537,14 @@ const styles = {
     display: "flex",
     gap: "10px",
     marginTop: "10px",
+    width:"80%",
+    height:"100px"
   },
   imagePreview: {
     position: "relative",
     width: "100px", // Set a fixed size for preview
     height: "100px", // Set a fixed size for preview
-    overflow: "hidden",
+    overflow:"hidden",
   },
   previewImage: {
     width: "100%", // Ensure image fits within the preview box
@@ -502,6 +562,83 @@ const styles = {
     cursor: "pointer",
     padding: "5px",
   },
+  imageContainer: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "10px",
+    padding: "20px",
+    border: "2px dashed #FF5A5F",
+    borderRadius: "10px",
+    width: "80%",
+    maxWidth: "500px",
+    margin: "auto",
+    marginBottom:"20px"
+  },
+  uploadButton: {
+    display: "inline-block",
+    padding: "10px 20px",
+    fontSize: "16px",
+    fontWeight: "bold",
+    color: "#fff",
+    backgroundColor: "#FF5A5F",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+    textAlign: "center",
+  },
+  imagePreviewContainer: {
+    display: "flex",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: "10px",
+    marginTop: "10px",
+   
+  },
+  imagePreviewWithDescription: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "5px",
+  },
+  imagePreview: {
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: "10px",
+    overflow: "hidden",
+    backgroundColor: "#f8f8f8",
+  },
+  previewImage: {
+    objectFit: "cover",
+    borderRadius: "10px",
+  },
+  removeButton: {
+    position: "absolute",
+    top: "5px",
+    right: "5px",
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    color: "#fff",
+    border: "none",
+    borderRadius: "50%",
+    width: "20px",
+    height: "20px",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "14px",
+  },
+  imageInput: {
+    padding: "5px",
+    width: "90%",
+    borderRadius: "5px",
+    border: "1px solid #ccc",
+    textAlign: "center",
+  },
 };
 
 export default HotelList;
+
+
