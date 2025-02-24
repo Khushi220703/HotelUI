@@ -29,7 +29,7 @@ export const LoginForm = ({ setloggedIn, closeModal }) => {
         setloggedIn(true);
         setError('');
         closeModal();
-        
+        localStorage.setItem("hotelAdminEmail", email);
         localStorage.setItem('token', data.token)
       } else {
         setError(data.message);

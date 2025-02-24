@@ -19,6 +19,7 @@ const HotelList = () => {
   const [hotels, setHotel] = useState([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [token, setToken] = useState({});
+  const [email, setEmail] = useState(localStorage.getItem("hotelAdminEmail") || "kj365268@gmail.com");
   const [newHotel, setNewHotel] = useState({
     name: "",
     location: {
@@ -28,12 +29,14 @@ const HotelList = () => {
       postalCode: "",
       country: "",
     },
+
     description: "",
     amenities: [],
     images: [],
     rating: 0,
     pricePerNight: 0,
   });
+  const [errors, setErrors] = useState({});
   const [activeStep, setActiveStep] = useState(0);
   const [searchParams] = useSearchParams();
   const tokens = searchParams.get("token");
@@ -55,6 +58,48 @@ const HotelList = () => {
 
       console.error("Token Verification Failed:", error.response?.data || error.message);
     }
+  };
+
+  const validatePage = () => {
+    let newErrors = {};
+    
+    
+    if (currentPage === 1) {
+     
+      
+      if (!newHotel.name.trim()) newErrors.name = "Hotel name is required";
+      if (!newHotel.location.address.trim()) newErrors.address = "Address is required";
+      if (!newHotel.location.city.trim()) newErrors.city = "City is required";
+    
+     
+    }
+
+    if (currentPage === 2) {
+      if (!newHotel.location.state.trim()) newErrors.state = "State is required";
+      if (!newHotel.location.postalCode.trim()) newErrors.postalCode = "Postal code is required";
+      if (!newHotel.location.country.trim()) newErrors.country = "Country is required";
+      
+    }
+
+    if (currentPage === 3) {
+      
+      
+      if (!newHotel.description.trim()) newErrors.description = "Description is required";
+      if (newHotel.pricePerNight === 0) newErrors.pricePerNight = "Price per night is required";
+     
+      
+    }
+
+    if(currentPage === 4){
+      if (newHotel.amenities.length === 0) newErrors.amenities = "At least one amenity is required";
+      console.log(newErrors);
+      
+    }
+
+    setErrors(newErrors);
+    
+    
+    return Object.keys(newErrors).length === 0;
   };
 
   const imageCount = newHotel.images.length;
@@ -142,8 +187,8 @@ const HotelList = () => {
       alert("Please add at least 3 images.");
       return;
     }
-
-
+    
+    if (validatePage()) {
     try {
       let formData = new FormData();
 
@@ -152,7 +197,7 @@ const HotelList = () => {
       formData.append("description", newHotel.description);
       formData.append("rating", newHotel.rating);
       formData.append("pricePerNight", newHotel.pricePerNight);
-
+      formData.append("email",email);
       // Append location fields explicitly
       for (const [key, value] of Object.entries(newHotel.location)) {
         formData.append(`location[${key}]`, value);
@@ -174,6 +219,7 @@ const HotelList = () => {
         console.log(key, value);
       }
 
+console.log(formData);
 
       const response = await fetch(`${process.env.REACT_APP_URL}hotel/add-hotel`, {
         method: "POST",
@@ -192,13 +238,18 @@ const HotelList = () => {
 
       console.log("Error while adding hotel.", error);
     }
+  }
   };
 
   const handleNextPage = () => {
+   
+    
+    if (validatePage()) {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
       setActiveStep((prev) => prev + 1)
     }
+  }
   };
 
   const handlePreviousPage = () => {
@@ -207,6 +258,7 @@ const HotelList = () => {
       setActiveStep((prev) => prev - 1)
     }
   };
+console.log(errors);
 
   const renderFormPage = () => {
     switch (currentPage) {
@@ -222,6 +274,8 @@ const HotelList = () => {
               onChange={handleFormChange}
               required
               style={styles.input}
+              error={!!errors.name}
+              
             />
             <input
               type="text"
@@ -231,6 +285,8 @@ const HotelList = () => {
               onChange={handleLocationChange}
               required
               style={styles.input}
+              error={!!errors.address}
+             
             />
             <input
               type="text"
@@ -240,6 +296,8 @@ const HotelList = () => {
               onChange={handleLocationChange}
               required
               style={styles.input}
+              error={!!errors.city}
+             
             />
           </>
         );
@@ -254,6 +312,8 @@ const HotelList = () => {
               onChange={handleLocationChange}
               required
               style={styles.input}
+              error={!!errors.state}
+             
             />
             <input
               type="text"
@@ -263,6 +323,8 @@ const HotelList = () => {
               onChange={handleLocationChange}
               required
               style={styles.input}
+              error={!!errors.postalCode}
+             
             />
             <input
               type="text"
@@ -272,6 +334,8 @@ const HotelList = () => {
               onChange={handleLocationChange}
               required
               style={styles.input}
+              error={!!errors.country}
+              
             />
           </>
         );
@@ -284,6 +348,8 @@ const HotelList = () => {
               value={newHotel.description}
               onChange={handleFormChange}
               style={styles.textarea}
+              error={!!errors.description}
+              
             />
             <input
               type="number"
@@ -293,6 +359,8 @@ const HotelList = () => {
               onChange={handleFormChange}
               required
               style={styles.input}
+              error={!!errors.pricePerNight}
+              
             />
           </>
         );
@@ -307,6 +375,8 @@ const HotelList = () => {
               value={newHotel.amenities.join(",")}
               onChange={handleAmenityChange}
               style={styles.input}
+              error={!!errors.amenities}
+             
             />
            <div style={styles.imageContainer}>
       {/* Custom Upload Button */}
@@ -415,6 +485,11 @@ const HotelList = () => {
             <button style={styles.closeButton} onClick={() => setIsFormOpen(false)}>
               X
             </button>
+            <div>
+               {Object.keys(errors).length > 0 && <p className="text-red-500">Please fill all details carefully!</p>}
+            </div>
+
+
             <form onSubmit={handleFormSubmit} style={styles.form}>
               {renderFormPage()}
               <div style={styles.navigationButtons}>
