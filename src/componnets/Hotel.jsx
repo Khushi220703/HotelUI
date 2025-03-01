@@ -14,6 +14,8 @@ import {
   InputAdornment,
 } from "@mui/material";
 import { motion } from "framer-motion";
+import js from "@eslint/js";
+
 
 const HotelList = () => {
   const [hotels, setHotel] = useState([]);
@@ -111,7 +113,7 @@ const HotelList = () => {
 
   const fetchHotel = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_URL}hotel/get-all-hotels`);
+      const response = await fetch(`${process.env.REACT_APP_URL}hotel/get-all-hotels/${email}`);
       const data = await response.json();
       setHotel(data);
     } catch (error) {
@@ -184,62 +186,74 @@ const HotelList = () => {
     e.preventDefault();
 
     if (newHotel.images.length < 3) {
-      alert("Please add at least 3 images.");
-      return;
+        alert("Please add at least 3 images.");
+        return;
     }
-    
+
     if (validatePage()) {
-    try {
-      let formData = new FormData();
+        try {
+            let formData = new FormData();
+            formData.append("name", newHotel.name);
+            formData.append("description", newHotel.description);
+            formData.append("rating", newHotel.rating);
+            formData.append("pricePerNight", newHotel.pricePerNight);
+            formData.append("email", newHotel.email || "default@example.com");
 
-      // Append basic fields
-      formData.append("name", newHotel.name);
-      formData.append("description", newHotel.description);
-      formData.append("rating", newHotel.rating);
-      formData.append("pricePerNight", newHotel.pricePerNight);
-      formData.append("email",email);
-      // Append location fields explicitly
-      for (const [key, value] of Object.entries(newHotel.location)) {
-        formData.append(`location[${key}]`, value);
-      }
+            // ✅ Convert Objects to Strings
+            formData.append("location", newHotel.location ? JSON.stringify(newHotel.location) : "{}");
+            formData.append("amenities", newHotel.amenities ? JSON.stringify(newHotel.amenities) : "[]");
 
+            newHotel.images.forEach((image) => {
+              if (image.file.size > 10 * 1024 * 1024) { // 10MB limit
+                  alert(`File ${image.file.name} is too large!`);
+                  return;
+              }
+          });
+          
 
-      // Append amenities as a JSON string
-      formData.append("amenities", newHotel.amenities);
+            // ✅ Append Images Properly
+            newHotel.images.forEach((image, index) => {
+                if (image.file instanceof File) {
+                    formData.append("images", image.file);
+                } else {
+                    console.error(`Image at index ${index} is not a File object`, image.file);
+                }
+            });
 
-      // Append images one by one
-      newHotel.images.forEach((image, index) => {
-        formData.append("images", image.file);
-        formData.append(`imageDescriptions`, image.description);
-      });
-      console.log(newHotel);
+            // ✅ Send Image Descriptions as Multiple Fields or JSON
+            const imageDescriptions = newHotel.images.map((image) => image.description);
+            formData.append("imageDescriptions", JSON.stringify(imageDescriptions));
 
-      console.log("FormData before submission:");
-      for (const [key, value] of formData.entries()) {
-        console.log(key, value);
-      }
+            // ✅ Debug FormData Before Sending
+            for (let pair of formData.entries()) {
+                console.log(pair[0], pair[1]);
+            }
 
-console.log(formData);
+            const response = await axios.post(
+                `${process.env.REACT_APP_URL}hotel/add-hotel`,
+                formData,
+                {
+                    headers: { "Content-Type": "multipart/form-data" },
+                   
+                }
+            );
 
-      const response = await fetch(`${process.env.REACT_APP_URL}hotel/add-hotel`, {
-        method: "POST",
-        body: formData,
-      });
-      console.log(response);
+            console.log("Server Response:", response);
 
-      if (response.ok) {
-        alert("Hotel added successfully");
-        fetchHotel(); // Reload the hotels list
-        setIsFormOpen(false); // Close the form
-      } else {
-        alert("Error adding hotel");
-      }
-    } catch (error) {
-
-      console.log("Error while adding hotel.", error);
+            if (response.status === 201) {
+                alert("Hotel added successfully");
+                fetchHotel();
+                setIsFormOpen(false);
+            } else {
+                console.log("Error Response from Server:", response.data);
+            }
+        } catch (error) {
+            console.log("Error while adding hotel:", error);
+        }
     }
-  }
-  };
+};
+
+
 
   const handleNextPage = () => {
    
@@ -258,7 +272,7 @@ console.log(formData);
       setActiveStep((prev) => prev - 1)
     }
   };
-console.log(errors);
+
 
   const renderFormPage = () => {
     switch (currentPage) {
