@@ -8,13 +8,15 @@ import axios from 'axios';
 import { useParams } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import {decodeToken} from '../assets/TokenDecode';
-
+import Loader from '../assets/loader';
 
 
 const HotelDetailView = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { hotel } = location.state;
+  const [isLoading,setIslaoding] = useState(false);
+  const [email, setEmail] = useState(localStorage.getItem("hotelAdminEmail"));
   const id = useParams();
   const locations = [
     { lat: 40.730610, lng: -73.935242 }, // New York
@@ -29,12 +31,16 @@ const HotelDetailView = () => {
   });
 
   const [openModal, setOpenModal] = useState(false); // State for opening modal
-
   
+  const token =  decodeToken(localStorage.getItem("token"));
+  
+     
   const handleReviewSubmit = async () => {
     if (newReview.reviewer && newReview.comment && newReview.rating) {
       hotel.reviews.push(newReview);
-      const token =  decodeToken(localStorage.getItem("token"));
+      
+      setIslaoding(true);
+      
       console.log(token);
       const reviews = {
         _id:hotel._id,
@@ -52,7 +58,10 @@ const HotelDetailView = () => {
       } catch (error) {
         console.log("There is an error from server side", error);
         
-      }     
+      }   
+      finally{
+        setIslaoding(false);
+      }  
     } else {
       alert('Please fill in all fields!');
     }
@@ -72,7 +81,7 @@ const HotelDetailView = () => {
   const handleCloseModal = () => setOpenModal(false);
 
   const handleDeleteHotel = async() => {
-   
+    setIslaoding(true);
     console.log(id);
     try {
       const response = await axios.delete(
@@ -90,22 +99,34 @@ const HotelDetailView = () => {
     } catch (error) {
       console.log('There was an error while deleting the hotel:', error);
     }
+    finally{
+      setIslaoding(false);
+    }
     
     setOpenModal(false);
   };
 
 
   
+  if(isLoading){
+    return (
+      <div style={{display:"flex",justifyContent:"center",alignItems:"center",height:"100vh"}}>
+        <Loader/>
+      </div>
+    )
+  }
   
-  
+ console.log(token);
+ 
   
   return (
     <div style={styles.container}>
-      <div style={styles.deleteButtonContainer}>
+     {token.isAdmin === "admin" ? <div style={styles.deleteButtonContainer}>
         <button onClick={handleOpenModal} style={styles.deleteButton}>
           Delete Hotel
         </button>
-      </div>
+      </div>: null
+     }
 
       {/* Image Gallery */}
       <Masonry columns={{ xs: 1, sm: 2, md: 3 }} spacing={2}>
@@ -151,7 +172,7 @@ const HotelDetailView = () => {
             </GoogleMap>
           </LoadScript>
         </div>
-        <PriceSection pricePerNight={hotel.pricePerNight} />
+        {token.isAdmin !== "admin"? <PriceSection pricePerNight={hotel.pricePerNight} />: null}
 
         {/* Amenities Section */}
         <div style={styles.amenitiesSection}>
@@ -202,7 +223,7 @@ const HotelDetailView = () => {
         </div>
 
         {/* New Review Section */}
-        <div style={styles.newReviewSection}>
+        {token.isAdmin !== "admin" ? <div style={styles.newReviewSection}>
           <h3>Submit Your Review</h3>
           <div style={styles.inputGroup}>
             <input
@@ -240,7 +261,7 @@ const HotelDetailView = () => {
               Submit
             </button>
           </div>
-        </div>
+        </div> : null}
       </div>
 
       {/* Modal for Delete Confirmation */}

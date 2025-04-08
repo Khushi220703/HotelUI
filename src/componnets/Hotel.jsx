@@ -15,13 +15,13 @@ import {
 } from "@mui/material";
 import { motion } from "framer-motion";
 import js from "@eslint/js";
-
+import Loader from "../assets/loader";
 
 const HotelList = () => {
   const [hotels, setHotel] = useState([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [token, setToken] = useState({});
-  const [email, setEmail] = useState(localStorage.getItem("hotelAdminEmail") || "kj365268@gmail.com");
+  const [email, setEmail] = useState(localStorage.getItem("hotelAdminEmail"));
   const [newHotel, setNewHotel] = useState({
     name: "",
     location: {
@@ -42,6 +42,7 @@ const HotelList = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [searchParams] = useSearchParams();
   const tokens = searchParams.get("token");
+  const [loading,setIslaoding] = useState(false);
   const steps = ["Hotel Details", "Hotel Location", "Price", "Amenities & Images"];
   useEffect(() => {
     if (tokens) {
@@ -105,25 +106,62 @@ const HotelList = () => {
   };
 
   const imageCount = newHotel.images.length;
-  const imageSize = Math.max(80, 150 - imageCount * 10); // Shrink size
-  const inputWidth = imageSize + 20; // Slightly wider than image
+  const imageSize = Math.max(80, 150 - imageCount * 10); 
+  const inputWidth = imageSize + 20; 
 
-  const [currentPage, setCurrentPage] = useState(1); // Track the current page of the form
-  const [totalPages, setTotalPages] = useState(4); // Total number of form pages
+  const [currentPage, setCurrentPage] = useState(1); 
+  const [totalPages, setTotalPages] = useState(4); 
 
   const fetchHotel = async () => {
+    setIslaoding(true);
+  
+    const fetchWithoutLocation = async () => {
+      try {
+        const response = await fetch(`${process.env.REACT_APP_URL}hotel/get-all-hotels/${email}`);
+        const data = await response.json();
+        setHotel(data);
+      } catch (error) {
+        console.log("Error while fetching hotels without location.", error);
+      } finally {
+        setIslaoding(false);
+      }
+    };
+  
     try {
-      const response = await fetch(`${process.env.REACT_APP_URL}hotel/get-all-hotels/${email}`);
-      const data = await response.json();
-      setHotel(data);
+      // Try to get user's location
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+        console.log("Latitude:", latitude, "Longitude:", longitude);
+          try {
+            const response = await fetch(
+              `${process.env.REACT_APP_URL}hotel/get-all-hotels/${email}?latitude=${latitude}&longitude=${longitude}`
+            );
+            const data = await response.json();
+            setHotel(data);
+          } catch (error) {
+            console.log("Error while fetching hotels with location.", error);
+            await fetchWithoutLocation(); // fallback
+          } finally {
+            setIslaoding(false);
+          }
+        },
+        async (error) => {
+          console.warn("Location denied or unavailable. Fetching without location.", error);
+          await fetchWithoutLocation();
+        }
+      );
     } catch (error) {
-      console.log("Error while fetching hotels.", error);
+      console.log("Unexpected error occurred.", error);
+      await fetchWithoutLocation();
     }
   };
-
+  
   useEffect(() => {
     fetchHotel();
-  }, []);
+  }, [newHotel]);
+  
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
@@ -184,7 +222,7 @@ const HotelList = () => {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-
+    setIslaoding(true);
     if (newHotel.images.length < 3) {
         alert("Please add at least 3 images.");
         return;
@@ -199,19 +237,19 @@ const HotelList = () => {
             formData.append("pricePerNight", newHotel.pricePerNight);
             formData.append("email", newHotel.email || "default@example.com");
 
-            // ✅ Convert Objects to Strings
+            
             formData.append("location", newHotel.location ? JSON.stringify(newHotel.location) : "{}");
             formData.append("amenities", newHotel.amenities ? JSON.stringify(newHotel.amenities) : "[]");
 
             newHotel.images.forEach((image) => {
-              if (image.file.size > 10 * 1024 * 1024) { // 10MB limit
+              if (image.file.size > 10 * 1024 * 1024) { 
                   alert(`File ${image.file.name} is too large!`);
                   return;
               }
           });
           
 
-            // ✅ Append Images Properly
+           
             newHotel.images.forEach((image, index) => {
                 if (image.file instanceof File) {
                     formData.append("images", image.file);
@@ -220,11 +258,11 @@ const HotelList = () => {
                 }
             });
 
-            // ✅ Send Image Descriptions as Multiple Fields or JSON
+           
             const imageDescriptions = newHotel.images.map((image) => image.description);
             formData.append("imageDescriptions", JSON.stringify(imageDescriptions));
 
-            // ✅ Debug FormData Before Sending
+           
             for (let pair of formData.entries()) {
                 console.log(pair[0], pair[1]);
             }
@@ -249,6 +287,9 @@ const HotelList = () => {
             }
         } catch (error) {
             console.log("Error while adding hotel:", error);
+        }
+        finally{
+          setIslaoding(false);
         }
     }
 };
@@ -447,7 +488,14 @@ const HotelList = () => {
         return null;
     }
   };
-
+ 
+  if(loading){
+    return (
+      <div style={{display:"flex",justifyContent:"center",alignItems:"center",height:"100vh"}}>
+        <Loader/>
+      </div>
+    )
+  }
   return (
     <div style={styles.container}>
       {token.isAdmin === "admin" ? (
@@ -550,6 +598,7 @@ const styles = {
     flexWrap: "wrap",
     justifyContent: "center",
     gap: "20px",
+    width:"95%"
   },
   input: {
     padding: "10px",

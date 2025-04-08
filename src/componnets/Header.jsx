@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import Logo from "../assets/logo.png";
+import Logo from "../assets/hotelLogos.jpg";
 import SearchBar from "./SearchBar";
 import LoginPage from './Login'
+import { useNavigate } from 'react-router-dom';
+
 const HomePage = ({ setloggedIn,loggedIn}) => {
   // State to control modal visibility
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -9,7 +11,7 @@ const HomePage = ({ setloggedIn,loggedIn}) => {
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
-
+  const navigate = useNavigate();
   const handleModalSwitch = () => {
     setIsLogin(!isLogin); // Toggle between login and signup forms
   };
@@ -27,9 +29,9 @@ const HomePage = ({ setloggedIn,loggedIn}) => {
     <>
       <div className="header" style={style.headerContainer}>
         <div className="logo">
-          <img src={Logo} alt='airbnb logo' width={200} />
+          <img src={Logo} alt='airbnb logo' width={100} height={100} onClick={()=>navigate("/")} style={{cursor:"pointer"}}/>
         </div>
-        <SearchBar />
+        {/* <SearchBar /> */}
         
         {!loggedIn ?<div className="auth-buttons">
           <button onClick={openModal} style={style.authButton}>Login / Sign Up</button>
